@@ -1,0 +1,3 @@
+- insert:
+    - id: plugin-sync
+      name: '@local/dsh-plugin-sync'
