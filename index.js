@@ -110,6 +110,7 @@ async function dispatch(ctx, request, response, url) {
     if (endpoint === '/config') {
       sendJson(response, 200, await updateConfig({
         gist: body.gist,
+        account: body.account,
         autoPush: body.autoPush,
         selectedPlugins: body.selectedPlugins,
       }));

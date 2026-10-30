@@ -39,7 +39,21 @@ const fs = require('node:fs');
 const args = process.argv.slice(2);
 fs.appendFileSync(process.env.FAKE_LOG, JSON.stringify({ command: 'gh', args }) + '\\n');
 const out = (value) => { process.stdout.write(value); process.exit(0); };
-if (args[0] === 'api' && args[1] === 'user') out('tester\\n');
+if (args[0] === 'api' && args[1] === 'user') out('tester');
+if (args[0] === 'auth' && args[1] === 'status') {
+  out(JSON.stringify({ hosts: { 'github.com': [
+    { state: 'success', active: true, host: 'github.com', login: 'tester' },
+    { state: 'success', active: false, host: 'github.com', login: 'ltfysl' },
+  ] } }));
+}
+if (args[0] === 'auth' && args[1] === 'token') {
+  const user = args[args.indexOf('--user') + 1];
+  out(user === 'ltfysl' ? 'token-ltfysl' : 'token-tester');
+}
+if (args[0] === 'gist' && !process.env.GH_TOKEN) {
+  process.stderr.write('missing GH_TOKEN');
+  process.exit(1);
+}
 if (args[0] === 'gist' && args[1] === 'create') {
   const file = args[args.length - 1];
   fs.copyFileSync(file, process.env.FAKE_GIST);
@@ -81,12 +95,23 @@ function readPayload() {
 test('discovers linked local plugins and reports an unsynced state', async () => {
   const status = await sync.getStatus();
   assert.equal(status.profile, 'desktop');
-  assert.equal(status.account, 'tester');
+  assert.equal(status.account, 'ltfysl');
+  assert.equal(status.accounts.length, 2);
+  assert.equal(status.accounts.find((entry) => entry.login === 'ltfysl').active, false);
   assert.equal(status.plugins.length, 1);
   assert.equal(status.plugins[0].name, '@local/plugin-a');
   assert.equal(status.plugins[0].selected, true);
   assert.equal(status.dirty, true);
   assert.equal(status.gistId, '');
+});
+
+test('selects the preferred account and persists an explicit account', async () => {
+  const ltfysl = await sync.updateConfig({ account: 'ltfysl' });
+  assert.equal(ltfysl.account, 'ltfysl');
+  const tester = await sync.updateConfig({ account: 'tester' });
+  assert.equal(tester.account, 'tester');
+  const back = await sync.updateConfig({ account: 'ltfysl' });
+  assert.equal(back.account, 'ltfysl');
 });
 
 test('creates a gist, excludes secrets and node_modules, and pushes changes', async () => {

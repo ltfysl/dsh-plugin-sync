@@ -30,7 +30,10 @@ window.__ModuleLoader__.load({
       autoPush: 'Auto-push',
       autoPushHint: 'Push whenever selected plugin files change.',
       autoPushNeedsGist: 'Connect a gist before enabling auto-push.',
-      account: 'GitHub',
+      account: 'GitHub account',
+      active: 'active',
+      noAccounts: 'No authenticated GitHub account',
+      accountChanged: 'GitHub account updated. Gists belong to this account.',
       lastPush: 'Last push',
       never: 'Never',
       statusSynced: 'Synced',
@@ -97,7 +100,10 @@ window.__ModuleLoader__.load({
       autoPush: 'Auto-Push',
       autoPushHint: 'Automatisch pushen, wenn sich ausgewählte Plugin-Dateien ändern.',
       autoPushNeedsGist: 'Verbinde zuerst einen Gist, um Auto-Push zu aktivieren.',
-      account: 'GitHub',
+      account: 'GitHub-Konto',
+      active: 'aktiv',
+      noAccounts: 'Kein angemeldetes GitHub-Konto',
+      accountChanged: 'GitHub-Konto aktualisiert. Gists gehören zu diesem Konto.',
       lastPush: 'Letzter Push',
       never: 'Nie',
       statusSynced: 'Synchron',
@@ -158,6 +164,10 @@ window.__ModuleLoader__.load({
 .ps-card{margin-top:14px;border:1px solid var(--dsw-alias-border-l2);border-radius:12px;background:var(--dsw-alias-bg-layer-1);overflow:hidden}
 .ps-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:11px 13px;border-bottom:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-2)}
 .ps-card-title{display:flex;align-items:center;gap:7px;margin:0;font-size:13px;font-weight:600;line-height:1.3}
+.ps-account{display:inline-flex;align-items:center;gap:6px;color:var(--dsw-alias-label-secondary);font-size:12px;line-height:1.2}
+.ps-select{height:30px;max-width:200px;padding:0 24px 0 8px;border:1px solid var(--dsw-alias-border-l2);border-radius:8px;background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);font:inherit;font-size:12px;line-height:1.2;cursor:pointer}
+.ps-select:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:2px}
+.ps-select:disabled{opacity:.55;cursor:not-allowed}
 .ps-card-body{padding:13px}
 .ps-muted{color:var(--dsw-alias-label-secondary);font-size:12px;line-height:1.45}
 .ps-mono{font-family:var(--dsw-font-mono,ui-monospace,SFMono-Regular,Menlo,monospace)}
@@ -632,6 +642,17 @@ window.__ModuleLoader__.load({
         });
       }
 
+      async function changeAccount(event) {
+        const account = event.target.value;
+        if (!account || account === data?.account) return;
+        await runAction('account', () => request('/config', {
+          method: 'POST',
+          body: { account },
+        }), () => {
+          notify(t('accountChanged'));
+        });
+      }
+
       async function copyLink() {
         if (!gistUrl) return;
         const copied = await copyText(gistUrl);
@@ -682,6 +703,11 @@ window.__ModuleLoader__.load({
             h(AlertIcon),
             h('div', { className: 'ps-banner-copy' }, actionError))
           : null,
+        data?.accountWarning
+          ? h('div', { className: 'ps-banner', role: 'alert' },
+            h(AlertIcon),
+            h('div', { className: 'ps-banner-copy' }, data.accountWarning))
+          : null,
         data?.lastError && !actionError
           ? h('div', { className: 'ps-banner', role: 'alert' },
             h(AlertIcon),
@@ -702,7 +728,20 @@ window.__ModuleLoader__.load({
         h('section', { className: 'ps-card', 'aria-labelledby': 'plugin-sync-gist-title' },
           h('div', { className: 'ps-card-head' },
             h('h2', { className: 'ps-card-title', id: 'plugin-sync-gist-title' }, h(CloudIcon, { size: 15 }), t('gist')),
-            data?.account ? h('span', { className: 'ps-chip' }, `${t('account')}: ${data.account}`) : null),
+            data?.accounts?.length
+              ? h('label', { className: 'ps-account' },
+                h('span', null, t('account')),
+                h('select', {
+                  className: 'ps-select',
+                  value: data.account,
+                  disabled: busy,
+                  onChange: changeAccount,
+                  'aria-label': t('account'),
+                }, data.accounts.map((entry) => h('option', {
+                  key: entry.login,
+                  value: entry.login,
+                }, entry.active ? `${entry.login} (${t('active')})` : entry.login))))
+              : h('span', { className: 'ps-chip ps-chip-warn' }, t('noAccounts'))),
           h('div', { className: 'ps-card-body' },
             h('div', { className: 'ps-gist-form' },
               h('input', {

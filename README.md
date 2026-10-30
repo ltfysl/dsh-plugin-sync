@@ -6,6 +6,9 @@ push/pull and optional automatic push.
 ## Requirements
 
 - GitHub CLI (`gh`) authenticated with the `gist` scope.
+- Plugin Sync prefers the `ltfysl` account when it is authenticated, and
+  otherwise uses the active `gh` account. Pick another account in the panel at
+  any time.
 - The Plugin Sync bundle installed in the active DSH profile.
 - Only linked `@local/*` plugins that expose a `dsh` manifest are discovered.
 
@@ -13,11 +16,14 @@ push/pull and optional automatic push.
 
 Open **Plugin Sync** in the sidebar.
 
-1. Select the local plugins to keep in the gist.
-2. Click **Create gist** to create a secret gist and push them, or paste an
+1. Pick the GitHub account in the gist card. The default is `ltfysl` when that
+   account is authenticated. Gists belong to the selected account; switching
+   accounts disconnects the current gist so it can be created or connected again.
+2. Select the local plugins to keep in the gist.
+3. Click **Create gist** to create a secret gist and push them, or paste an
    existing gist URL/ID and click **Use gist**.
-3. Use **Push** and **Pull** for manual sync.
-4. Enable **Auto-push** to push selected plugin changes automatically.
+4. Use **Push** and **Pull** for manual sync.
+5. Enable **Auto-push** to push selected plugin changes automatically.
 
 Auto-push checks every 15 seconds while the DSH host is running. It only acts
 when auto-push is enabled, a gist is connected, at least one plugin is selected,
@@ -71,6 +77,8 @@ restart, and `pnpm install` runs with `--ignore-scripts`.
   logs, coverage, caches and `.DS_Store`.
 - The gist is created as **secret** by default.
 - Tokens stay inside the `gh` child process; the browser never sees them.
+- Gist commands run with the selected account's token, without changing the
+  globally active `gh` account.
 
 ## Development
 
