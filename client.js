@@ -155,7 +155,7 @@ window.__ModuleLoader__.load({
 
     const CSS = `
 .ps-root,.ps-root *{box-sizing:border-box}
-.ps-root{width:100%;max-width:980px;margin:0 auto;padding:calc(var(--dsh-frame-top-clearance,0px) + 24px) 24px 48px;color:var(--dsw-alias-label-primary)}
+.ps-root{height:100%;min-height:100%;overflow:auto;width:100%;max-width:980px;margin:0 auto;padding:calc(var(--dsh-frame-top-clearance,0px) + 24px) 24px 48px;color:var(--dsw-alias-label-primary)}
 .ps-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .ps-heading{min-width:0}
 .ps-title{display:flex;align-items:center;gap:8px;margin:0;font-size:20px;line-height:1.25;font-weight:600;letter-spacing:-.01em}

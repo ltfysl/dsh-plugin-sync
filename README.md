@@ -160,6 +160,10 @@ Web bundle with a sidebar panel and main view.
   the panel.
 - **Gist not found after switching accounts**: connect or create the gist under
   the newly selected account.
-- **Pull installed plugins but they are missing**: restart DSH.
+- **Pull installed plugins but they are missing**: restart DSH. If that does
+  not help, `pnpm` may not have been reachable from DSH — install pnpm, then
+  pull again; the pull re-links the affected plugins automatically.
 - **pnpm warning after pull**: run `pnpm install` manually in the profile
-  directory shown by DSH, then restart.
+  directory shown by DSH, then restart. DSH launched from the desktop finds
+  `pnpm` and `gh` in the usual install locations (`~/.local/bin`, Homebrew,
+  version managers) even when they are not on its own `PATH`.
