@@ -64,6 +64,49 @@ absolute path to the cloned directory. This is also the development workflow.
 A connected gist belongs to the selected account. Switching accounts disconnects
 the current gist so it can be created or connected under the new account.
 
+## Set up a new device
+
+Plugin Sync runs inside DSH, so DSH itself must already be installed there — the
+plugin cannot install DSH. Everything else is checked for you: open the Plugin
+Sync panel and the **Device setup** card appears when something is missing,
+with the matching install command for macOS or Windows and a copy button.
+
+### macOS
+
+1. Install DSH.
+2. In DSH: **Plugins → Add plugin → Install a third-party plugin** and enter
+   `https://github.com/ltfysl/dsh-plugin-sync`.
+3. Open the Plugin Sync panel. If the setup card asks for it, run:
+
+   ```bash
+   brew install gh && gh auth login --scopes gist
+   curl -fsSL https://get.pnpm.dev/install.sh | sh -
+   ```
+
+4. Continue with *Pull on another machine* below.
+
+### Windows
+
+1. Install DSH for Windows.
+2. In DSH: **Plugins → Add plugin → Install a third-party plugin** and enter
+   `https://github.com/ltfysl/dsh-plugin-sync`.
+3. Open the Plugin Sync panel. If the setup card asks for it, run in
+   PowerShell:
+
+   ```powershell
+   winget install --id GitHub.cli
+   gh auth login --scopes gist
+   irm https://get.pnpm.dev/install.ps1 | iex
+   ```
+
+4. Continue with *Pull on another machine* below.
+
+The panel finds `gh` and `pnpm` in their usual install locations (Homebrew,
+`~/.local/bin`, PNPM_HOME, nvm, fnm, Volta, asdf, `%LOCALAPPDATA%\pnpm` on
+Windows) even when DSH was launched with a minimal `PATH`. If a tool was
+installed while DSH was already running, click **Check again** in the setup
+card or restart DSH.
+
 ## Pull on another machine
 
 1. Install Plugin Sync from this repository first. The plugin does not sync
@@ -150,7 +193,7 @@ checkout, pull the repository and reinstall or restart the local bundle.
 node --test
 ```
 
-The package is `@local/dsh-plugin-sync` with version `0.2.0`. Its Host half uses
+The package is `@local/dsh-plugin-sync` with version `0.3.0`. Its Host half uses
 authenticated Web routes under `/plugin-sync`; the Client half is a plain DSH
 Web bundle with a sidebar panel and main view.
 

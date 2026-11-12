@@ -1,6 +1,6 @@
 {
   "name": "@local/dsh-plugin-sync",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "private": true,
   "description": "Sync linked local Harness plugins through a secret GitHub gist with manual push/pull and automatic push.",
   "type": "module",

@@ -8,6 +8,7 @@ import {
   SyncError,
   createGist,
   getStatus,
+  preflight,
   pullGist,
   pushGist,
   startAutoPush,
@@ -99,6 +100,10 @@ async function dispatch(ctx, request, response, url) {
   if (method === 'GET' || method === 'HEAD') {
     if (endpoint === '/status') {
       sendJson(response, 200, await getStatus());
+      return;
+    }
+    if (endpoint === '/preflight') {
+      sendJson(response, 200, await preflight());
       return;
     }
     sendEmpty(response, 404);

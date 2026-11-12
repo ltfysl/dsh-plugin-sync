@@ -81,6 +81,19 @@ window.__ModuleLoader__.load({
       pullUnavailable: 'Connect a gist before pulling.',
       pushUnavailable: 'Connect a gist before pushing.',
       autoPushSaved: 'Auto-push updated.',
+      deviceSetup: 'Device setup',
+      deviceReady: 'This device can pull and install plugins.',
+      deviceCheckGh: 'GitHub CLI (gh)',
+      deviceCheckGhAuth: 'GitHub login',
+      deviceCheckPnpm: 'pnpm',
+      deviceOk: 'ready',
+      deviceInstall: 'Install with:',
+      deviceAuthHint: 'Run:',
+      deviceBootstrapHint: 'Plugin Sync is not synced itself. On a new device install it first via Plugins → Add plugin (third-party) using https://github.com/ltfysl/dsh-plugin-sync.',
+      commandCopied: 'Command copied.',
+      copyCommand: 'Copy',
+      recheck: 'Check again',
+      checking: 'Checking…',
     };
 
     const DE_DICT = {
@@ -151,6 +164,19 @@ window.__ModuleLoader__.load({
       pullUnavailable: 'Verbinde zuerst einen Gist, um zu pullen.',
       pushUnavailable: 'Verbinde zuerst einen Gist, um zu pushen.',
       autoPushSaved: 'Auto-Push aktualisiert.',
+      deviceSetup: 'Geräte-Setup',
+      deviceReady: 'Dieses Gerät kann Plugins pullen und installieren.',
+      deviceCheckGh: 'GitHub CLI (gh)',
+      deviceCheckGhAuth: 'GitHub-Anmeldung',
+      deviceCheckPnpm: 'pnpm',
+      deviceOk: 'bereit',
+      deviceInstall: 'Installieren mit:',
+      deviceAuthHint: 'Ausführen:',
+      deviceBootstrapHint: 'Plugin Sync selbst wird nicht mitgesynct. Installiere es auf einem neuen Gerät zuerst über Plugins → Plugin hinzufügen (Drittanbieter) mit https://github.com/ltfysl/dsh-plugin-sync.',
+      commandCopied: 'Befehl kopiert.',
+      copyCommand: 'Kopieren',
+      recheck: 'Erneut prüfen',
+      checking: 'Wird geprüft…',
     };
 
     const CSS = `
@@ -231,6 +257,15 @@ window.__ModuleLoader__.load({
 .ps-foot{margin-top:14px;color:var(--dsw-alias-label-secondary);font-size:12px;line-height:1.5}
 .ps-summary{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px}
 .ps-summary strong{font-weight:600}
+.ps-device-row{display:flex;align-items:center;gap:9px;padding:10px 13px;border-top:1px solid var(--dsw-alias-border-l1);flex-wrap:wrap}
+.ps-device-row:first-child{border-top:0}
+.ps-device-ok{color:var(--dsw-alias-state-success-primary);flex:none}
+.ps-device-bad{color:var(--dsw-alias-state-warn-primary);flex:none}
+.ps-device-name{min-width:150px;font-size:12px;font-weight:500}
+.ps-device-hint{color:var(--dsw-alias-label-secondary);font-size:12px}
+.ps-cmd{display:inline-flex;align-items:center;gap:7px;flex:1 1 auto;min-width:0;max-width:100%;padding:5px 6px 5px 9px;border:1px solid var(--dsw-alias-border-l2);border-radius:7px;background:var(--dsw-alias-bg-base)}
+.ps-cmd-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--dsw-font-mono,ui-monospace,SFMono-Regular,Menlo,monospace);font-size:11.5px;line-height:1.3}
+.ps-device-foot{padding:10px 13px;border-top:1px solid var(--dsw-alias-border-l1);color:var(--dsw-alias-label-secondary);font-size:12px;line-height:1.5}
 @media (max-width: 760px){.ps-root{padding-left:16px;padding-right:16px}.ps-head{align-items:stretch}.ps-head-actions{width:100%}.ps-plugin{grid-template-columns:18px minmax(0,1fr)}.ps-plugin-state{display:none}.ps-gist-form .ps-input{flex-basis:100%}}
 @media (pointer: coarse){.ps-btn{height:38px}.ps-input{height:38px}.ps-btn-small{height:32px}}
 `;
@@ -385,6 +420,63 @@ window.__ModuleLoader__.load({
         }, '×'));
     }
 
+    function DeviceCommand({ t, command, onCopy }) {
+      return h('span', { className: 'ps-cmd' },
+        h('span', { className: 'ps-cmd-text', title: command }, command),
+        h('button', {
+          type: 'button',
+          className: 'ps-btn ps-btn-small',
+          onClick: async () => {
+            const copied = await copyText(command);
+            onCopy?.(copied);
+          },
+        }, t('copyCommand')));
+    }
+
+    function DeviceCheckRow({ ok, name, children }) {
+      return h('div', { className: 'ps-device-row' },
+        h('span', { className: ok ? 'ps-device-ok' : 'ps-device-bad' },
+          ok ? h(CheckIcon, { size: 14 }) : h(AlertIcon, { size: 14 })),
+        h('span', { className: 'ps-device-name' }, name),
+        children);
+    }
+
+    function DeviceSetupCard({ t, check, onCopy, onRecheck, checking }) {
+      const gh = check?.gh ?? { found: false, authed: false };
+      const pnpm = check?.pnpm ?? { found: false };
+      const hints = check?.hints ?? {};
+      const ghAuthCommand = hints.ghAuth || 'gh auth login --scopes gist';
+      return h('section', { className: 'ps-card', 'aria-labelledby': 'plugin-sync-device-title' },
+        h('div', { className: 'ps-card-head' },
+          h('h2', { className: 'ps-card-title', id: 'plugin-sync-device-title' }, h(AlertIcon, { size: 15 }), t('deviceSetup')),
+          h('button', {
+            type: 'button',
+            className: 'ps-btn ps-btn-small',
+            onClick: onRecheck,
+            disabled: checking,
+          }, checking ? t('checking') : t('recheck'))),
+        h(DeviceCheckRow, { ok: gh.found && gh.authed, name: t('deviceCheckGh') },
+          gh.found && gh.authed
+            ? h('span', { className: 'ps-device-hint' }, `${gh.account || ''} ${t('deviceOk')}`.trim())
+            : gh.found
+              ? [
+                h('span', { className: 'ps-device-hint', key: 'hint' }, t('deviceAuthHint')),
+                h(DeviceCommand, { key: 'cmd', t, command: ghAuthCommand, onCopy }),
+              ]
+              : [
+                h('span', { className: 'ps-device-hint', key: 'hint' }, t('deviceInstall')),
+                h(DeviceCommand, { key: 'cmd', t, command: hints.gh || 'gh auth login --scopes gist', onCopy }),
+              ]),
+        h(DeviceCheckRow, { ok: pnpm.found, name: t('deviceCheckPnpm') },
+          pnpm.found
+            ? h('span', { className: 'ps-device-hint' }, t('deviceOk'))
+            : [
+              h('span', { className: 'ps-device-hint', key: 'hint' }, t('deviceInstall')),
+              h(DeviceCommand, { key: 'cmd', t, command: hints.pnpm || 'npm i -g pnpm', onCopy }),
+            ]),
+        h('div', { className: 'ps-device-foot' }, t('deviceBootstrapHint')));
+    }
+
     function PullDialog({ t, busy, overwrite, onOverwrite, onClose, onConfirm }) {
       const dialogRef = useRef(null);
       useEffect(() => {
@@ -454,6 +546,24 @@ window.__ModuleLoader__.load({
       const [pullOpen, setPullOpen] = useState(false);
       const [overwrite, setOverwrite] = useState(false);
       const [pullResult, setPullResult] = useState(null);
+      const [deviceCheck, setDeviceCheck] = useState(null);
+      const [checkingDevice, setCheckingDevice] = useState(false);
+
+      useEffect(() => {
+        let active = true;
+        async function load() {
+          try {
+            const check = await request('/preflight');
+            if (active) setDeviceCheck(check);
+          } catch {
+            // The readiness card simply stays hidden when the check fails.
+          }
+        }
+        load();
+        return () => {
+          active = false;
+        };
+      }, []);
 
       useEffect(() => {
         pendingRef.current = pending;
@@ -607,6 +717,17 @@ window.__ModuleLoader__.load({
           setPullResult(result);
           notify(t('pulled'));
         });
+        // Re-check device readiness so a failed install (missing pnpm or gh
+        // auth) immediately shows what to install on this machine.
+        setCheckingDevice(true);
+        try {
+          const check = await request('/preflight');
+          setDeviceCheck(check);
+        } catch {
+          // Keep the previous state when the check fails.
+        } finally {
+          setCheckingDevice(false);
+        }
       }
 
       async function updateSelection(next) {
@@ -724,6 +845,19 @@ window.__ModuleLoader__.load({
               pullResult.requiresRestart ? h('div', null, t('pullRestart')) : null,
               pullResult.pnpmWarning ? h('div', null, t('pullPnpmWarning'), ' ', pullResult.pnpmWarning) : null,
               !pullResult.requiresRestart && (pullResult.installed?.length ?? 0) === 0 ? h('div', null, t('pullEmpty')) : null))
+          : null,
+        deviceCheck && !deviceCheck.ready
+          ? h(DeviceSetupCard, {
+            t,
+            check: deviceCheck,
+            onCopy: (copied) => notify(copied ? t('commandCopied') : t('copyError'), copied ? 'success' : 'error'),
+            onRecheck: () => {
+              if (checkingDevice) return;
+              setCheckingDevice(true);
+              request('/preflight').then((check) => setDeviceCheck(check)).catch(() => {}).finally(() => setCheckingDevice(false));
+            },
+            checking: checkingDevice,
+          })
           : null,
         h('section', { className: 'ps-card', 'aria-labelledby': 'plugin-sync-gist-title' },
           h('div', { className: 'ps-card-head' },
