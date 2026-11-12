@@ -86,10 +86,13 @@ window.__ModuleLoader__.load({
       deviceCheckGh: 'GitHub CLI (gh)',
       deviceCheckGhAuth: 'GitHub login',
       deviceCheckPnpm: 'pnpm',
+      deviceCheckDsh: 'DeepSeek Harness CLI (dsh)',
+      deviceDshOptional: 'Optional — this app already includes DSH. For terminal use, install the CLI with:',
       deviceOk: 'ready',
       deviceInstall: 'Install with:',
       deviceAuthHint: 'Run:',
       deviceBootstrapHint: 'Plugin Sync is not synced itself. On a new device install it first via Plugins → Add plugin (third-party) using https://github.com/ltfysl/dsh-plugin-sync.',
+      deviceBootstrapCli: 'Or install Plugin Sync from a terminal:',
       commandCopied: 'Command copied.',
       copyCommand: 'Copy',
       recheck: 'Check again',
@@ -169,10 +172,13 @@ window.__ModuleLoader__.load({
       deviceCheckGh: 'GitHub CLI (gh)',
       deviceCheckGhAuth: 'GitHub-Anmeldung',
       deviceCheckPnpm: 'pnpm',
+      deviceCheckDsh: 'DeepSeek Harness CLI (dsh)',
+      deviceDshOptional: 'Optional — diese App enthält DSH bereits. Für die Terminal-Nutzung installiere die CLI mit:',
       deviceOk: 'bereit',
       deviceInstall: 'Installieren mit:',
       deviceAuthHint: 'Ausführen:',
       deviceBootstrapHint: 'Plugin Sync selbst wird nicht mitgesynct. Installiere es auf einem neuen Gerät zuerst über Plugins → Plugin hinzufügen (Drittanbieter) mit https://github.com/ltfysl/dsh-plugin-sync.',
+      deviceBootstrapCli: 'Oder installiere Plugin Sync im Terminal:',
       commandCopied: 'Befehl kopiert.',
       copyCommand: 'Kopieren',
       recheck: 'Erneut prüfen',
@@ -266,6 +272,7 @@ window.__ModuleLoader__.load({
 .ps-cmd{display:inline-flex;align-items:center;gap:7px;flex:1 1 auto;min-width:0;max-width:100%;padding:5px 6px 5px 9px;border:1px solid var(--dsw-alias-border-l2);border-radius:7px;background:var(--dsw-alias-bg-base)}
 .ps-cmd-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--dsw-font-mono,ui-monospace,SFMono-Regular,Menlo,monospace);font-size:11.5px;line-height:1.3}
 .ps-device-foot{padding:10px 13px;border-top:1px solid var(--dsw-alias-border-l1);color:var(--dsw-alias-label-secondary);font-size:12px;line-height:1.5}
+.ps-device-foot-hint{display:block;margin-top:7px}
 @media (max-width: 760px){.ps-root{padding-left:16px;padding-right:16px}.ps-head{align-items:stretch}.ps-head-actions{width:100%}.ps-plugin{grid-template-columns:18px minmax(0,1fr)}.ps-plugin-state{display:none}.ps-gist-form .ps-input{flex-basis:100%}}
 @media (pointer: coarse){.ps-btn{height:38px}.ps-input{height:38px}.ps-btn-small{height:32px}}
 `;
@@ -444,8 +451,10 @@ window.__ModuleLoader__.load({
     function DeviceSetupCard({ t, check, onCopy, onRecheck, checking }) {
       const gh = check?.gh ?? { found: false, authed: false };
       const pnpm = check?.pnpm ?? { found: false };
+      const dsh = check?.dsh ?? { found: false };
       const hints = check?.hints ?? {};
       const ghAuthCommand = hints.ghAuth || 'gh auth login --scopes gist';
+      const bootstrapCommand = `dsh plugin --profile ${check?.profile || '<profile>'} add https://github.com/ltfysl/dsh-plugin-sync`;
       return h('section', { className: 'ps-card', 'aria-labelledby': 'plugin-sync-device-title' },
         h('div', { className: 'ps-card-head' },
           h('h2', { className: 'ps-card-title', id: 'plugin-sync-device-title' }, h(AlertIcon, { size: 15 }), t('deviceSetup')),
@@ -474,7 +483,17 @@ window.__ModuleLoader__.load({
               h('span', { className: 'ps-device-hint', key: 'hint' }, t('deviceInstall')),
               h(DeviceCommand, { key: 'cmd', t, command: hints.pnpm || 'npm i -g pnpm', onCopy }),
             ]),
-        h('div', { className: 'ps-device-foot' }, t('deviceBootstrapHint')));
+        h(DeviceCheckRow, { ok: dsh.found, name: t('deviceCheckDsh') },
+          dsh.found
+            ? h('span', { className: 'ps-device-hint' }, dsh.path)
+            : [
+              h('span', { className: 'ps-device-hint', key: 'hint' }, t('deviceDshOptional')),
+              h(DeviceCommand, { key: 'cmd', t, command: hints.dsh || 'npm install -g @deepseek-ai/dsh', onCopy }),
+            ]),
+        h('div', { className: 'ps-device-foot' },
+          t('deviceBootstrapHint'),
+          h('span', { className: 'ps-device-foot-hint' }, t('deviceBootstrapCli')),
+          h(DeviceCommand, { t, command: bootstrapCommand, onCopy })));
     }
 
     function PullDialog({ t, busy, overwrite, onOverwrite, onClose, onConfirm }) {

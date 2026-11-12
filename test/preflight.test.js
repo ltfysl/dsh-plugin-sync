@@ -13,9 +13,11 @@ const home = path.join(temp, 'home');
 const profile = path.join(home, 'profiles', 'desktop');
 const ghDir = path.join(temp, 'gh-bin');
 const pnpmDir = path.join(temp, 'pnpm-bin');
+const dshDir = path.join(temp, 'dsh-bin');
 fs.mkdirSync(profile, { recursive: true });
 fs.mkdirSync(ghDir, { recursive: true });
 fs.mkdirSync(pnpmDir, { recursive: true });
+fs.mkdirSync(dshDir, { recursive: true });
 
 fs.writeFileSync(path.join(ghDir, 'gh'), `#!/usr/bin/env node
 const args = process.argv.slice(2);
@@ -30,9 +32,11 @@ process.exit(1);
 fs.chmodSync(path.join(ghDir, 'gh'), 0o755);
 
 // The pnpm existence check only resolves the executable; a placeholder is
-// enough because preflight never spawns pnpm itself.
+// enough because preflight never spawns pnpm itself. Same for the dsh CLI.
 fs.writeFileSync(path.join(pnpmDir, 'pnpm'), '#!/bin/sh\nexit 0\n');
 fs.chmodSync(path.join(pnpmDir, 'pnpm'), 0o755);
+fs.writeFileSync(path.join(dshDir, 'dsh'), '#!/bin/sh\nexit 0\n');
+fs.chmodSync(path.join(dshDir, 'dsh'), 0o755);
 
 process.env.DSH_HOME = home;
 process.env.DSH_PROFILE = 'desktop';
@@ -49,6 +53,7 @@ process.env.PATH = [
   '/usr/sbin',
   '/sbin',
   ghDir,
+  dshDir,
 ].join(path.delimiter);
 process.env.PNPM_HOME = pnpmDir;
 
@@ -63,9 +68,13 @@ test('preflight reports a ready device with gh authenticated and pnpm present', 
   assert.equal(check.gh.authed, true);
   assert.equal(check.gh.account, 'tester');
   assert.equal(check.pnpm.found, true);
+  assert.equal(check.dsh.found, true);
+  assert.equal(check.dsh.path.endsWith('/dsh'), true);
+  assert.equal(check.profile, 'desktop');
   assert.equal(check.node, process.version);
   assert.equal(typeof check.hints.gh, 'string');
   assert.equal(typeof check.hints.pnpm, 'string');
+  assert.equal(typeof check.hints.dsh, 'string');
 });
 
 test('preflight flags a missing pnpm with an install hint and stays honest about gh', async () => {
@@ -75,9 +84,12 @@ test('preflight flags a missing pnpm with an install hint and stays honest about
     assert.equal(check.pnpm.found, false);
     assert.equal(check.gh.found, true);
     assert.equal(check.gh.authed, true);
+    assert.equal(check.dsh.found, true);
     assert.equal(check.ready, false);
     assert.equal(typeof check.hints.pnpm, 'string');
     assert.ok(check.hints.pnpm.length > 0);
+    assert.equal(typeof check.hints.dsh, 'string');
+    assert.ok(check.hints.dsh.length > 0);
   } finally {
     process.env.PNPM_HOME = pnpmDir;
   }
@@ -109,6 +121,9 @@ process.exit(1);
     const check = await sync.preflight();
     assert.equal(check.gh.found, true);
     assert.equal(check.gh.authed, false);
+    // The third PATH has no dsh directory: the CLI row must report the
+    // missing branch honestly instead of inheriting the earlier result.
+    assert.equal(check.dsh.found, false);
     assert.equal(check.ready, false);
   } finally {
     process.env.PATH = previousPath;

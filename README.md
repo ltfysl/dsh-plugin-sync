@@ -66,16 +66,33 @@ the current gist so it can be created or connected under the new account.
 
 ## Set up a new device
 
-Plugin Sync runs inside DSH, so DSH itself must already be installed there — the
-plugin cannot install DSH. Everything else is checked for you: open the Plugin
-Sync panel and the **Device setup** card appears when something is missing,
-with the matching install command for macOS or Windows and a copy button.
+Plugin Sync runs inside DSH, so DSH itself must be installed there first — the
+plugin cannot install DSH. The DSH CLI ships as the npm package
+[`@deepseek-ai/dsh`](https://www.npmjs.com/package/@deepseek-ai/dsh) and needs
+Node.js 24.9 or newer. Everything after that is checked for you: open the
+Plugin Sync panel and the **Device setup** card appears when something is
+missing, with the matching install command for macOS or Windows and a copy
+button.
 
 ### macOS
 
-1. Install DSH.
+1. Install Node.js and the DSH CLI:
+
+   ```bash
+   brew install node
+   npm install -g @deepseek-ai/dsh
+   ```
+
+   (The desktop app alone also works; the CLI is what `dsh` commands below
+   use.)
+
 2. In DSH: **Plugins → Add plugin → Install a third-party plugin** and enter
-   `https://github.com/ltfysl/dsh-plugin-sync`.
+   `https://github.com/ltfysl/dsh-plugin-sync` — or, from a terminal:
+
+   ```bash
+   dsh plugin --profile desktop add https://github.com/ltfysl/dsh-plugin-sync
+   ```
+
 3. Open the Plugin Sync panel. If the setup card asks for it, run:
 
    ```bash
@@ -87,9 +104,23 @@ with the matching install command for macOS or Windows and a copy button.
 
 ### Windows
 
-1. Install DSH for Windows.
+1. Install Node.js and the DSH CLI (PowerShell):
+
+   ```powershell
+   winget install OpenJS.NodeJS.LTS
+   npm install -g @deepseek-ai/dsh
+   ```
+
+   (The desktop app alone also works; the CLI is what `dsh` commands below
+   use.)
+
 2. In DSH: **Plugins → Add plugin → Install a third-party plugin** and enter
-   `https://github.com/ltfysl/dsh-plugin-sync`.
+   `https://github.com/ltfysl/dsh-plugin-sync` — or, from PowerShell:
+
+   ```powershell
+   dsh plugin --profile desktop add https://github.com/ltfysl/dsh-plugin-sync
+   ```
+
 3. Open the Plugin Sync panel. If the setup card asks for it, run in
    PowerShell:
 
